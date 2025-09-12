@@ -55,7 +55,7 @@ col1, col2 = st.columns(2)
 with col1:
     st.markdown(
         f"""
-        <div style="{card_style.format(bg='#e74c3c')}">
+        <div style="{card_style.format(bg='#f67c78')}">
             <p style="color:white; font-size:16px; margin:0;">Total homicidios</p>
             <p style="color:white; font-size:22px; font-weight:bold; margin:0;">
                 {total_homicidios:,}
@@ -68,7 +68,7 @@ with col1:
 with col2:
     st.markdown(
         f"""
-        <div style="{card_style.format(bg='#2980b9')}">
+        <div style="{card_style.format(bg='#63a6a0')}">
             <p style="color:white; font-size:16px; margin:0;">Tasa promedio (100k)</p>
             <p style="color:white; font-size:22px; font-weight:bold; margin:0;">
                 {promedio_tasa:.2f}
@@ -96,10 +96,10 @@ fig_map = px.choropleth_mapbox(
     center={"lat": 4.5, "lon": -74},
     zoom=5,
     opacity=0.7,
-    color_continuous_scale="Reds",
+    color_continuous_scale="Pinkyl",
     height=600
 )
-#st.plotly_chart(fig_map, use_container_width=True)
+st.plotly_chart(fig_map, use_container_width=True)
 
 
 # Top 10
@@ -129,7 +129,7 @@ with col1:
         orientation="h",
         text="total_homicidios",
         color="total_homicidios",
-        color_continuous_scale="Reds"
+        color_continuous_scale="Pinkyl"
     )
     fig_mas.update_layout(
         xaxis_title="Homicidios",
@@ -148,7 +148,7 @@ with col2:
         orientation="h",
         text="total_homicidios",
         color="total_homicidios",
-        color_continuous_scale="Greens"
+        color_continuous_scale="Mint"
     )
     fig_menos.update_layout(
         xaxis_title="Homicidios",
@@ -186,7 +186,7 @@ fig_treemap = px.treemap(
     path=["nombre_dpto_x"],       # Jerarquía: por departamento
     values="total_homicidios",   # El tamaño es el número absoluto de homicidios
     color="tasa_homicidios",     # Color según tasa (opcional, puedes cambiar a 'total_homicidios')
-    color_continuous_scale="Reds",
+    color_continuous_scale="Mint",
     title="Distribución de homicidios por departamento (2024)"
 )
 
@@ -200,5 +200,5 @@ ax.hist(data["tasa_homicidios"].dropna(), bins=40, color="darkred", edgecolor="b
 ax.set_xlabel("Tasa por 100k")
 ax.set_ylabel("Número de municipios")
 ax.set_title("Histograma de tasas municipales")
-st.pyplot(fig)
+#st.pyplot(fig)
 
