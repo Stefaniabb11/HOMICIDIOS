@@ -4,4 +4,3 @@ matplotlib.pyplot
 plotly.express
 geopandas
 numpy
-pathlib
