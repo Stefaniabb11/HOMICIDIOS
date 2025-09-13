@@ -5,6 +5,8 @@ import plotly.express as px
 import geopandas as gpd
 import numpy as np
 from pathlib import Path
+from matplotlib.colors import LinearSegmentedColormap
+
 
 data = pd.read_csv("data_3.csv")          # homicidios, población, etc.
 gdf = gpd.read_parquet("data_3.parquet")
@@ -36,6 +38,40 @@ promedio_tasa = data["tasa_homicidios"].mean()
 
 st.title("🔎 Homicidios en Colombia — 2024")
 st.markdown("Visualización de homicidios a nivel municipal y departamental.")
+
+#intento depto
+dept = data.groupby("nombre_dpto")["total_homicidios"].sum().reset_index()
+
+fig_dept = px.bar(
+    dept.sort_values("total_homicidios", ascending=False),
+    x="nombre_dpto",
+    y="total_homicidios",
+    color="total_homicidios",
+    color_continuous_scale="Pinkyl",  # Paleta púrpura-naranja
+    labels={
+        "total_homicidios": "Homicidios Totales",
+        "nombre_dpto": "Departamento"
+    },
+    title="Distribución de Homicidios por Departamento"
+)
+
+st.plotly_chart(fig_dept, use_container_width=True)
+
+#grafico mun
+fig_tasa = px.bar(
+    data.sort_values("tasa_homicidios", ascending=False).head(30),  # Top 30 municipios
+    x="municipio",
+    y="tasa_homicidios",
+    color="tasa_homicidios",
+    color_continuous_scale="Mint",  # escala rojo-púrpura
+    labels={
+        "tasa_homicidios": "Tasa de Homicidios (por 100k)",
+        "municipio": "Municipio"
+    },
+    title="Tasa de homicidios por municipio (2024)"
+)
+
+st.plotly_chart(fig_tasa, use_container_width=True)
 
 #INTENTOOO
 card_style = """
@@ -78,57 +114,35 @@ with col2:
         unsafe_allow_html=True
     )
 
-
-#Mapa 
-st.subheader("Mapa de las tasas de homicidio")
-fig_map = px.choropleth_mapbox(
-    gdf,
-    geojson=gdf.geometry,
-    locations=gdf.index,
-    color="tasa_homicidios",
-    hover_name="municipio",
-    hover_data={
-    "nombre_dpto_x": True,
-    "total_homicidios": True,
-    "poblacion": True,
-    "tasa_homicidios":':.2f'},
-    mapbox_style="carto-positron",
-    center={"lat": 4.5, "lon": -74},
-    zoom=5,
-    opacity=0.7,
-    color_continuous_scale="Pinkyl",
-    height=600
-)
-st.plotly_chart(fig_map, use_container_width=True)
-
+#Grafico de eso 
 
 # Top 10
 
 #st.subheader("Top 10 municipios con más homicidios")
-top_mas = data.sort_values("total_homicidios", ascending=False).head(10)
-#st.dataframe(top_mas[["municipio", "cod_dpto", "total_homicidios", "tasa_homicidios"]])
+top_mas = data.sort_values("tasa_homicidios", ascending=False).head(10)
+#st.dataframe(top_mas[["municipio", "cod_dpto", "tasa_homicidios"]])
 
 #st.subheader("Top 10 municipios con menos homicidios")
-top_menos = data.sort_values("total_homicidios", ascending=True).head(10)
-#st.dataframe(top_menos[["municipio", "cod_dpto", "total_homicidios", "tasa_homicidios"]])
+top_menos = data.sort_values("tasa_homicidios", ascending=True).head(10)
+#st.dataframe(top_menos[["municipio", "cod_dpto", "tasa_homicidios"]])
 
 st.subheader("Comparación de municipios")
 
 # Datos
-top_mas = data.sort_values("total_homicidios", ascending=False).head(10)
-top_menos = data.sort_values("total_homicidios", ascending=True).head(10)
+top_mas = data.sort_values("tasa_homicidios", ascending=False).head(10)
+top_menos = data.sort_values("tasa_homicidios", ascending=True).head(10)
 
 col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("#### 🔴 Top 10 con más homicidios")
     fig_mas = px.bar(
-        top_mas.sort_values("total_homicidios"),  # ordenado de menor a mayor para que se vea mejor
-        x="total_homicidios",
+        top_mas.sort_values("tasa_homicidios",ascending= True),  # ordenado de menor a mayor para que se vea mejor
+        x="tasa_homicidios",
         y="municipio",
         orientation="h",
-        text="total_homicidios",
-        color="total_homicidios",
+        text="tasa_homicidios",
+        color="tasa_homicidios",
         color_continuous_scale="Pinkyl"
     )
     fig_mas.update_layout(
@@ -142,12 +156,12 @@ with col1:
 with col2:
     st.markdown("#### 🟢 Top 10 con menos homicidios")
     fig_menos = px.bar(
-        top_menos.sort_values("total_homicidios"), 
-        x="total_homicidios",
+        top_menos.sort_values("tasa_homicidios"), 
+        x="tasa_homicidios",
         y="municipio",
         orientation="h",
-        text="total_homicidios",
-        color="total_homicidios",
+        text="tasa_homicidios",
+        color="tasa_homicidios",
         color_continuous_scale="Mint"
     )
     fig_menos.update_layout(
@@ -158,47 +172,41 @@ with col2:
     )
     st.plotly_chart(fig_menos, use_container_width=True)
 
+st.subheader("Mapa de tasa de tasa de homicidios")
 
 
-#distrubuir por departamento 
-st.subheader("Distribución por departamento")
-dep = data.groupby("nombre_dpto").agg(
-    homicidios_total=("total_homicidios", "sum"),
-    poblacion_total=("poblacion", "sum")
-).reset_index()
-dep["tasa_100k"] = (dep["homicidios_total"] / dep["poblacion_total"]) * 100000
 
-fig_dep = px.bar(
-    dep.sort_values("homicidios_total", ascending=False),
-    x="homicidios_total",
-    y="nombre_dpto",
-    orientation="h",
-    color="tasa_100k",
-    color_continuous_scale="Blues",
-    labels={"homicidios_total": "Homicidios", "nombre_dpto": "Departamento"},
-    title="Homicidios totales y tasa por departamento"
-)
-#st.plotly_chart(fig_dep, use_container_width=True)
+# Creamos el colormap Pinkyl a partir de Plotly
 
-#treemap
-fig_treemap = px.treemap(
-    gdf, 
-    path=["nombre_dpto_x"],       # Jerarquía: por departamento
-    values="total_homicidios",   # El tamaño es el número absoluto de homicidios
-    color="tasa_homicidios",     # Color según tasa (opcional, puedes cambiar a 'total_homicidios')
-    color_continuous_scale="Mint",
-    title="Distribución de homicidios por departamento (2024)"
+# Dibujar el mapa
+
+
+# Definir Pinkyl como gradiente
+pinkyl_colors = ["#edd597", "#ca7185", "#d94f6d"]
+custom_cmap = LinearSegmentedColormap.from_list("Pinkyl", pinkyl_colors)
+
+fig, ax = plt.subplots(1, 1, figsize=(4,4))
+
+gdf.plot(
+    column="tasa_homicidios",   # 👈 ajusté al nombre real de tu columna
+    ax=ax,
+    legend=True,
+    cmap=custom_cmap,
+    missing_kwds={
+        "color": "lightgrey",
+        "edgecolor": "white",
+        "hatch": "///",
+        "label": "Sin datos"
+    }
 )
 
-st.plotly_chart(fig_treemap, use_container_width=True)
+# Quitar fondo blanco
+ax.set_facecolor("none")
+fig.patch.set_alpha(0)
+
+ax.axis("off")
+st.pyplot(fig)
 
 
-#
-st.subheader("Distribución de tasas municipales")
-fig, ax = plt.subplots(figsize=(8, 4))
-ax.hist(data["tasa_homicidios"].dropna(), bins=40, color="darkred", edgecolor="black")
-ax.set_xlabel("Tasa por 100k")
-ax.set_ylabel("Número de municipios")
-ax.set_title("Histograma de tasas municipales")
-#st.pyplot(fig)
+
 
